@@ -15,7 +15,7 @@ pipeline {
 
         stage('Docker Login') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-valentina', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-valentina', usernameVariable: 'valenmataloni', passwordVariable: 'DOCKER_PASS')]) {
                     sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
                 }
             }
@@ -62,14 +62,12 @@ pipeline {
 
     post {
         always {
-            node {
-                echo 'Cleaning up...'
-                sh '''
-                    docker stop mysql-valentina || true
-                    docker rm mysql-valentina || true
-                    docker volume prune -f || true
-                '''
-            }
+            echo 'Cleaning up...'
+            sh '''
+                docker stop mysql-valentina || true
+                docker rm mysql-valentina || true
+                docker volume prune -f || true
+            '''
         }
     }
 }
