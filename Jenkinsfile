@@ -2,20 +2,26 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub-valentina')
+        IMAGE_NAME = 'valentinamataloni/valentina-mysql'
+        CONTAINER_NAME = 'mysql-valentina'
+        MYSQL_ROOT_PASSWORD = 'root'
     }
 
     stages {
         stage('Checkout') {
             steps {
                 echo 'Clonando repositorio...'
-                git branch: 'main', url: 'https://github.com/valentinamataloni/valentina-mysql.git'
+                git url: 'https://github.com/valentinamataloni/valentina-mysql.git', branch: 'main'
             }
         }
 
         stage('Docker Login') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-valentina', usernameVariable: 'valenmataloni', passwordVariable: 'DOCKER_PASS')]) {
+                withCredentials([usernamePassword(
+                    credentialsId: 'docker-hub-password-id',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
                     sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
                 }
             }
@@ -23,40 +29,40 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t valenmataloni/valentina-mysql:1.0 .'
+                sh 'docker build -t $IMAGE_NAME .'
             }
         }
 
         stage('Remove previous container and volumes') {
             steps {
                 sh '''
-                    docker stop mysql-valentina || true
-                    docker rm mysql-valentina || true
-                    docker volume prune -f || true
+                    docker stop $CONTAINER_NAME || true
+                    docker rm $CONTAINER_NAME || true
+                    docker volume prune -f
                 '''
             }
         }
 
         stage('Run Container') {
             steps {
-                sh 'docker run -d --name mysql-valentina -e MYSQL_ROOT_PASSWORD=1234 valenmataloni/valentina-mysql:1.0'
+                sh '''
+                    docker run -d --name $CONTAINER_NAME -e MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD -p 3306:3306 $IMAGE_NAME
+                '''
             }
         }
 
         stage('Test Container') {
             steps {
                 sh '''
-                    echo "Esperando que MySQL esté listo..."
-                    sleep 10
-                    docker exec mysql-valentina bash -c "until mysqladmin ping -uroot -p1234 --silent; do sleep 2; done"
-                    docker exec mysql-valentina mysql -uroot -p1234 -e "SHOW DATABASES;"
+                    sleep 15
+                    docker exec $CONTAINER_NAME mysql -uroot -p$MYSQL_ROOT_PASSWORD -e "SHOW DATABASES;"
                 '''
             }
         }
 
         stage('Push to DockerHub') {
             steps {
-                sh 'docker push valenmataloni/valentina-mysql:1.0'
+                sh 'docker push $IMAGE_NAME'
             }
         }
     }
@@ -65,10 +71,4 @@ pipeline {
         always {
             echo 'Limpiando contenedor y volúmenes...'
             sh '''
-                docker stop mysql-valentina || true
-                docker rm mysql-valentina || true
-                docker volume prune -f || true
-            '''
-        }
-    }
-}
+                docker stop $CONTAINER_N_
