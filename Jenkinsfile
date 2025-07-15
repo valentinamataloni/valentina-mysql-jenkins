@@ -62,15 +62,12 @@ pipeline {
 
     post {
         always {
-            node {
-                echo 'Cleaning up...'
-                sh '''
-                    docker stop mysql-valentina || true
-                    docker rm mysql-valentina || true
-                    docker volume prune -f || true
-                '''
-            }
+            echo 'Cleaning up...'
+            sh '''
+                docker stop mysql-valentina || true
+                docker rm mysql-valentina || true
+                docker volume prune -f || true
+            '''
         }
     }
 }
-
