@@ -33,11 +33,12 @@ pipeline {
             }
         }
 
-        stage('Remove previous container (if exists)') {
+        stage('Remove previous container and volumes') {
             steps {
                 sh '''
                     docker stop mysql-valentina || true
                     docker rm mysql-valentina || true
+                    docker volume prune -f
                 '''
             }
         }
@@ -51,14 +52,14 @@ pipeline {
         }
 
         stage('Test Container') {
-    steps {
-        sh '''
-            sleep 5
-            docker exec mysql-valentina bash -c 'until mysqladmin ping -uroot -p1234 --silent; do sleep 2; done'
-            docker exec mysql-valentina mysql -uroot -p1234 -e "SHOW DATABASES;"
-        '''
-    }
-}
+            steps {
+                sh '''
+                    sleep 5
+                    docker exec mysql-valentina bash -c "until mysqladmin ping -uroot -p1234 --silent; do sleep 2; done"
+                    docker exec mysql-valentina mysql -uroot -p1234 -e "SHOW DATABASES;"
+                '''
+            }
+        }
 
         stage('Push to DockerHub') {
             steps {
@@ -75,6 +76,7 @@ pipeline {
             sh '''
                 docker stop mysql-valentina || true
                 docker rm mysql-valentina || true
+                docker volume prune -f
             '''
         }
     }
