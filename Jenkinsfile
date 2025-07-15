@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_CREDENTIALS = credentials('docker-hub-password-id')
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-valentina')
     }
 
     stages {
@@ -15,7 +15,7 @@ pipeline {
 
         stage('Docker Login') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'docker-hub-password-id', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-valentina', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
                 }
             }
@@ -62,12 +62,14 @@ pipeline {
 
     post {
         always {
-            echo 'Cleaning up...'
-            sh '''
-                docker stop mysql-valentina || true
-                docker rm mysql-valentina || true
-                docker volume prune -f || true
-            '''
+            node {
+                echo 'Cleaning up...'
+                sh '''
+                    docker stop mysql-valentina || true
+                    docker rm mysql-valentina || true
+                    docker volume prune -f || true
+                '''
+            }
         }
     }
 }
