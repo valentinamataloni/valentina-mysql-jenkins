@@ -8,4 +8,4 @@ COPY init.sql /docker-entrypoint-initdb.d/
 EXPOSE 3306
 
 # Declarar el volumen para que los datos persistan entre reinicios
-# VOLUME ["/var/lib/mysql"]
+
