@@ -22,14 +22,18 @@ pipeline {
                     usernameVariable: 'DOCKER_USER',
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
-                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+                    sh '''
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                    '''
                 }
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $IMAGE_NAME .'
+                sh '''
+                    docker build -t $IMAGE_NAME .
+                '''
             }
         }
 
@@ -62,7 +66,9 @@ pipeline {
 
         stage('Push to DockerHub') {
             steps {
-                sh 'docker push $IMAGE_NAME'
+                sh '''
+                    docker push $IMAGE_NAME
+                '''
             }
         }
     }
@@ -71,4 +77,10 @@ pipeline {
         always {
             echo 'Limpiando contenedor y volúmenes...'
             sh '''
-                docker stop $CONTAINER_N_
+                docker stop $CONTAINER_NAME || true
+                docker rm $CONTAINER_NAME || true
+                docker volume prune -f
+            '''
+        }
+    }
+}
