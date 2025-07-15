@@ -74,8 +74,8 @@ pipeline {
 
             echo Esperando a que MySQL esté disponible dentro del contenedor...
 
-            retries=15
-            until docker exec mysql-valentina mysqladmin --protocol=TCP -uroot -proot ping --silent; do
+            retries=30
+           until docker exec mysql-valentina mysqladmin --protocol=TCP -uroot -proot ping 2>/dev/null | grep -q "mysqld is alive"; do
               echo "MySQL aún no está disponible. Esperando..."
               sleep 2
               retries=$((retries-1))
