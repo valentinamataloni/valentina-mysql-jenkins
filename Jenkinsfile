@@ -2,24 +2,21 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_USER = 'valenmataloni'
-        DOCKER_PASS = credentials('docker-hub-password-id') // Cambia por el ID real de tus credenciales en Jenkins
+        DOCKERHUB_CREDENTIALS = credentials('docker-hub-password-id')
     }
 
     stages {
         stage('Checkout') {
             steps {
                 echo 'Clonando repositorio...'
-                git 'https://github.com/valentinamataloni/valentina-mysql.git'
+                git branch: 'main', url: 'https://github.com/valentinamataloni/valentina-mysql.git'
             }
         }
 
         stage('Docker Login') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'docker-hub-password-id', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh '''
-                        echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-                    '''
+                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
                 }
             }
         }
@@ -32,22 +29,11 @@ pipeline {
 
         stage('Remove previous container and volumes') {
             steps {
-                script {
-                    // Mostrar volúmenes antes
-                    sh 'echo "Volúmenes antes de prune:" && docker volume ls'
-
-                    // Detener y eliminar contenedor anterior si existe
-                    sh '''
-                        docker stop mysql-valentina || true
-                        docker rm mysql-valentina || true
-                    '''
-
-                    // Limpiar volúmenes no usados
-                    sh 'docker volume prune -f'
-
-                    // Mostrar volúmenes después
-                    sh 'echo "Volúmenes después de prune:" && docker volume ls'
-                }
+                sh '''
+                    docker stop mysql-valentina || true
+                    docker rm mysql-valentina || true
+                    docker volume prune -f || true
+                '''
             }
         }
 
@@ -76,12 +62,15 @@ pipeline {
 
     post {
         always {
-            echo 'Cleaning up...'
-            sh '''
-                docker stop mysql-valentina || true
-                docker rm mysql-valentina || true
-                docker volume prune -f || true
-            '''
+            node {
+                echo 'Cleaning up...'
+                sh '''
+                    docker stop mysql-valentina || true
+                    docker rm mysql-valentina || true
+                    docker volume prune -f || true
+                '''
+            }
         }
     }
 }
+
