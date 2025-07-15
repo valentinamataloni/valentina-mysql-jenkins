@@ -51,13 +51,13 @@ pipeline {
         }
 
         stage('Test Container') {
-            steps {
-                sh '''
-                    sleep 10
-                    docker exec mysql-valentina mysql -uroot -p1234 -e "SHOW DATABASES;"
-                '''
-            }
-        }
+    steps {
+        sh '''
+            sleep 10
+            docker exec mysql-valentina mysql -uroot -p1234 -h127.0.0.1 -e "SHOW DATABASES;"
+        '''
+    }
+}
 
         stage('Push to DockerHub') {
             steps {
