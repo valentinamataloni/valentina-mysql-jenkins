@@ -46,7 +46,8 @@ pipeline {
         stage('Test Container') {
             steps {
                 sh '''
-                    sleep 5
+                    echo "Esperando que MySQL esté listo..."
+                    sleep 10
                     docker exec mysql-valentina bash -c "until mysqladmin ping -uroot -p1234 --silent; do sleep 2; done"
                     docker exec mysql-valentina mysql -uroot -p1234 -e "SHOW DATABASES;"
                 '''
@@ -62,7 +63,7 @@ pipeline {
 
     post {
         always {
-            echo 'Cleaning up...'
+            echo 'Limpiando contenedor y volúmenes...'
             sh '''
                 docker stop mysql-valentina || true
                 docker rm mysql-valentina || true
