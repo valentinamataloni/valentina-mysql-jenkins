@@ -53,8 +53,9 @@ pipeline {
         stage('Test Container') {
     steps {
         sh '''
-            sleep 10
-            docker exec mysql-valentina mysql -uroot -p1234 -h127.0.0.1 -e "SHOW DATABASES;"
+            sleep 5
+            docker exec mysql-valentina bash -c 'until mysqladmin ping -uroot -p1234 --silent; do sleep 2; done'
+            docker exec mysql-valentina mysql -uroot -p1234 -e "SHOW DATABASES;"
         '''
     }
 }
