@@ -2,28 +2,29 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = 'valentinamataloni/valentina-mysql'
-        CONTAINER_NAME = 'mysql-valentina'
-        MYSQL_ROOT_PASSWORD = 'root'
+        IMAGE_NAME = "valentinamataloni/valentina-mysql"
+        CONTAINER_NAME = "mysql-valentina"
+        MYSQL_ROOT_PASSWORD = "root"
+    }
+
+    options {
+        skipStagesAfterUnstable()
     }
 
     stages {
+
         stage('Checkout') {
             steps {
-                echo 'Clonando repositorio...'
+                echo "Clonando repositorio..."
                 git url: 'https://github.com/valentinamataloni/valentina-mysql.git', branch: 'main'
             }
         }
 
         stage('Docker Login') {
             steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'dockerhub-valentina',
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_PASS'
-                )]) {
+                withCredentials([string(credentialsId: 'dockerhub-valentina', variable: 'DOCKER_PASS')]) {
                     sh '''
-                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        echo "$DOCKER_PASS" | docker login -u valenmataloni --password-stdin
                     '''
                 }
             }
@@ -58,8 +59,17 @@ pipeline {
         stage('Test Container') {
             steps {
                 sh '''
-                    sleep 15
-                    docker exec $CONTAINER_NAME mysql -uroot -p$MYSQL_ROOT_PASSWORD -e "SHOW DATABASES;"
+                    echo "Esperando a que MySQL esté disponible..."
+                    for i in {1..30}; do
+                        if docker exec $CONTAINER_NAME mysqladmin --protocol=TCP -uroot -p$MYSQL_ROOT_PASSWORD ping --silent; then
+                            echo "MySQL está listo."
+                            break
+                        fi
+                        echo "Esperando..."
+                        sleep 2
+                    done
+
+                    docker exec $CONTAINER_NAME mysql --protocol=TCP -uroot -p$MYSQL_ROOT_PASSWORD -e "SHOW DATABASES;"
                 '''
             }
         }
