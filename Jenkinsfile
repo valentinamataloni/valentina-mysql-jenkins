@@ -61,22 +61,23 @@ pipeline {
         }
 
         stage('Test Container') {
-            steps {
-                sh '''
-                    echo "Esperando a que MySQL esté disponible..."
-                    for i in {1..30}; do
-                        if docker exec $CONTAINER_NAME mysqladmin --protocol=TCP -uroot -p$MYSQL_ROOT_PASSWORD ping --silent; then
-                            echo "MySQL está listo."
-                            break
-                        fi
-                        echo "Esperando..."
-                        sleep 2
-                    done
-
-                    docker exec $CONTAINER_NAME mysql --protocol=TCP -uroot -p$MYSQL_ROOT_PASSWORD -e "SHOW DATABASES;"
-                '''
-            }
-        }
+    steps {
+        sh '''
+            echo "Esperando a que MySQL esté disponible..."
+            for i in {1..30}; do
+                if docker exec mysql-valentina mysqladmin --protocol=TCP -uroot -proot ping --silent; then
+                    echo "MySQL está listo."
+                    docker exec mysql-valentina mysql --protocol=TCP -uroot -proot -e "SHOW DATABASES;"
+                    exit 0
+                fi
+                echo "Esperando..."
+                sleep 2
+            done
+            echo "MySQL no respondió a tiempo."
+            exit 1
+        '''
+    }
+}
 
         stage('Push to DockerHub') {
             steps {
