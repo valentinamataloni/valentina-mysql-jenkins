@@ -62,34 +62,33 @@ pipeline {
         stage('Test Container') {
     steps {
         sh '''
-            echo "Esperando a que el contenedor esté corriendo..."
+            echo Esperando a que el contenedor esté corriendo...
             for i in {1..10}; do
-                if docker ps --filter "name=mysql-valentina" --filter "status=running" | grep mysql-valentina > /dev/null; then
-                    echo "Contenedor está en ejecución."
-                    break
-                fi
-                echo "Esperando contenedor..."
-                sleep 2
+              if docker ps --filter name=mysql-valentina --filter status=running | grep mysql-valentina; then
+                echo "Contenedor está en ejecución."
+                break
+              fi
+              echo "Esperando contenedor..."
+              sleep 2
             done
 
-            echo "Esperando a que MySQL esté disponible dentro del contenedor..."
-            for i in {1..30}; do
-                if docker exec mysql-valentina mysqladmin --protocol=TCP -uroot -proot ping --silent; then
-                    echo "MySQL está listo."
-                    docker exec mysql-valentina mysql --protocol=TCP -uroot -proot -e "SHOW DATABASES;"
-                    exit 0
-                fi
-                echo "Esperando respuesta de MySQL..."
-                sleep 2
+            echo Esperando a que MySQL esté disponible dentro del contenedor...
+
+            retries=15
+            until docker exec mysql-valentina mysqladmin --protocol=TCP -uroot -proot ping --silent; do
+              echo "MySQL aún no está disponible. Esperando..."
+              sleep 2
+              retries=$((retries-1))
+              if [ $retries -le 0 ]; then
+                echo "MySQL no respondió a tiempo."
+                exit 1
+              fi
             done
 
-            echo "MySQL no respondió a tiempo."
-            exit 1
+            echo "MySQL está disponible y funcionando."
         '''
     }
 }
-
-
         stage('Push to DockerHub') {
             steps {
                 sh '''
