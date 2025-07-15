@@ -3,23 +3,22 @@ pipeline {
 
     environment {
         DOCKER_USER = 'valenmataloni'
-        DOCKER_IMAGE = "${DOCKER_USER}/valentina-mysql"
-        DOCKER_TAG = '1.0'
+        DOCKER_PASS = credentials('docker-hub-password-id') // Cambia por el ID real de tus credenciales en Jenkins
     }
 
     stages {
         stage('Checkout') {
             steps {
                 echo 'Clonando repositorio...'
-                git url: 'https://github.com/valentinamataloni/valentina-mysql.git', branch: 'main'
+                git 'https://github.com/valentinamataloni/valentina-mysql.git'
             }
         }
 
         stage('Docker Login') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-valentina', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                withCredentials([usernamePassword(credentialsId: 'docker-hub-password-id', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     sh '''
-                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
                     '''
                 }
             }
@@ -27,27 +26,34 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh '''
-                    docker build -t $DOCKER_IMAGE:$DOCKER_TAG .
-                '''
+                sh 'docker build -t valenmataloni/valentina-mysql:1.0 .'
             }
         }
 
         stage('Remove previous container and volumes') {
             steps {
-                sh '''
-                    docker stop mysql-valentina || true
-                    docker rm mysql-valentina || true
-                    docker volume prune -f
-                '''
+                script {
+                    // Mostrar volúmenes antes
+                    sh 'echo "Volúmenes antes de prune:" && docker volume ls'
+
+                    // Detener y eliminar contenedor anterior si existe
+                    sh '''
+                        docker stop mysql-valentina || true
+                        docker rm mysql-valentina || true
+                    '''
+
+                    // Limpiar volúmenes no usados
+                    sh 'docker volume prune -f'
+
+                    // Mostrar volúmenes después
+                    sh 'echo "Volúmenes después de prune:" && docker volume ls'
+                }
             }
         }
 
         stage('Run Container') {
             steps {
-                sh '''
-                    docker run -d --name mysql-valentina -e MYSQL_ROOT_PASSWORD=1234 $DOCKER_IMAGE:$DOCKER_TAG
-                '''
+                sh 'docker run -d --name mysql-valentina -e MYSQL_ROOT_PASSWORD=1234 valenmataloni/valentina-mysql:1.0'
             }
         }
 
@@ -63,9 +69,7 @@ pipeline {
 
         stage('Push to DockerHub') {
             steps {
-                sh '''
-                    docker push $DOCKER_IMAGE:$DOCKER_TAG
-                '''
+                sh 'docker push valenmataloni/valentina-mysql:1.0'
             }
         }
     }
@@ -76,7 +80,7 @@ pipeline {
             sh '''
                 docker stop mysql-valentina || true
                 docker rm mysql-valentina || true
-                docker volume prune -f
+                docker volume prune -f || true
             '''
         }
     }
