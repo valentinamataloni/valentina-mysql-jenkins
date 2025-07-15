@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "valentinamataloni/valentina-mysql"
+        IMAGE_NAME = "valenmataloni/valentina-mysql"
         CONTAINER_NAME = "mysql-valentina"
         MYSQL_ROOT_PASSWORD = "root"
     }
