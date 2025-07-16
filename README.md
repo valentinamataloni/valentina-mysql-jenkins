@@ -1,85 +1,49 @@
-# 🐋 Imagen Docker Personalizada: MySQL + Base de datos inicial
-
-Este proyecto crea una imagen personalizada basada en `mysql:8.0`, con una base de datos predefinida que se inicializa automáticamente al ejecutar el contenedor.
-
----
-
-## Pasos para construir, ejecutar y subir la imagen
-
-### 1. Iniciar sesión en DockerHub
-# Imagen Docker Personalizada: MySQL + Base de datos inicial
-
-Este proyecto crea una imagen personalizada basada en `mysql:8.0`, con una base de datos predefinida que se inicializa automáticamente al ejecutar el contenedor.
-
----
-
-## Pasos para construir, ejecutar y subir la imagen
-
-### 1. Iniciar sesión en DockerHub
-
-bash - 
-docker login
-
-### 2. Crear el archivo init.sql
-CREATE DATABASE IF NOT EXISTS ejemplo;
-USE ejemplo;
-
-CREATE TABLE IF NOT EXISTS usuarios (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  nombre VARCHAR(100) NOT NULL
-);
-
-INSERT INTO usuarios (nombre) VALUES ('Camila'), ('Matias'), ('Daniela');
-
-### 3. Crear el archivo Dockerfile
-
-FROM mysql:8.0
-
-COPY init.sql /docker-entrypoint-initdb.d/
-
-EXPOSE 3306
-
-VOLUME ["/var/lib/mysql"]
-
-### 4. Construir la imagen personalizada
-docker build -t valentina-mysql:8.0 .
-### 5. Ejecutar el contenedor
-bash - 
-docker run -d \
-  --name mysql-valentina \
-  -p 3306:3306 \
-  -v mysql-data:/var/lib/mysql \
-  -e MYSQL_ROOT_PASSWORD=root123 \
-  valentina-mysql:8.0
-
-### 6. Etiquetar la imagen para DockerHub
-docker tag valentina-mysql:8.0 valenmataloni/valentina-mysql:1.0
-### 7. Subir la imagen a DockerHub
-bash - 
-docker push valenmataloni/valentina-mysql:1.0
-### 8. Probar la imagen desde cualquier máquina
-bash - 
-docker run -d \
-  --name mysql-valentina \
-  -p 3306:3306 \
-  -e MYSQL_ROOT_PASSWORD=root123 \
-  valenmataloni/valentina-mysql:1.0
-### 9. Acceder al contenedor y verificar los datos
-docker exec -it mysql-valentina mysql -u root -p
-contraseña: root123
-# Una vez dentro de MySQL:
-USE ejemplo;
-SELECT * FROM usuarios;
-# Resultado esperado:
-+----+---------+
-| id | nombre  |
-+----+---------+
-|  1 | Camila  |
-|  2 | Matias  |
-|  3 | Daniela |
-+----+---------+
+# Documentación del Pipeline Jenkins (valentina-mysql)
 
 
+## Estructura del pipeline
+
+El pipeline está definido en el archivo `Jenkinsfile` y realiza las siguientes etapas:
+
+1. **Clonación del repositorio** desde GitHub.
+2. **Login a DockerHub** usando credenciales almacenadas en Jenkins.
+3. **Build de la imagen Docker** utilizando el `Dockerfile` del repositorio.
+4. **Eliminación de contenedores/volúmenes previos** para evitar conflictos.
+5. **Ejecución de la imagen como contenedor**.
+6. **Verificación del estado del contenedor y de MySQL**.
+7. **Push de la imagen a DockerHub** si las pruebas son exitosas.
 
 
+### Jenkins Plugins necesarios
 
+- Docker Pipeline
+- Git plugin
+- Pipeline
+- Credentials Binding Plugin
+
+### Herramientas instaladas
+
+- Docker
+- Git
+
+### Requisitos de sistema
+- Jenkins corriendo sobre máquina provisionada con Vagrant
+
+### Variables y credenciales
+Crear las siguientes credenciales en Jenkins:
+
+- **DOCKER_PASS** (tipo: `Secret text`): contraseña de DockerHub.
+
+### Variables del pipeline
+
+- `IMAGE_NAME`: nombre de la imagen (ej: `valenmataloni/valentina-mysql`)
+- `TAG`: versión/tag de la imagen
+
+## Replicar el pipeline en una nueva instancia
+
+1. Instalar Jenkins.
+2. Instalar los plugins listados anteriormente.
+3. Instalar Docker y Git en el sistema operativo.
+4. Crear credenciales de tipo `Secret text` en Jenkins con ID: `DOCKER_PASS`.
+5. Crear un nuevo `Pipeline job` y asociar el repositorio Git: `https://github.com/valentinamataloni/valentina-mysql.git`
+6. Ejecutar el pipeline.
