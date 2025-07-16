@@ -45,5 +45,5 @@ Crear las siguientes credenciales en Jenkins:
 2. Instalar los plugins listados anteriormente.
 3. Instalar Docker y Git en el sistema operativo.
 4. Crear credenciales de tipo `Secret text` en Jenkins con ID: `DOCKER_PASS`.
-5. Crear un nuevo `Pipeline job` y asociar el repositorio Git: `https://github.com/valentinamataloni/valentina-mysql.git`
+5. Crear un nuevo `Pipeline job` y asociar el repositorio Git: `https://github.com/valentinamataloni/valentina-mysql-jenkins.git`
 6. Ejecutar el pipeline.
