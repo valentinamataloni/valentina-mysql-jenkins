@@ -16,7 +16,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 echo "Clonando repositorio..."
-                git url: 'https://github.com/valentinamataloni/valentina-mysql.git', branch: 'main'
+                git url: 'https://github.com/valentinamataloni/valentina-mysql-jenkins.git', branch: 'main'
             }
         }
 
